@@ -1,5 +1,6 @@
 package com.example.q.simday;
 
+import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
@@ -18,7 +19,7 @@ import android.widget.TextView;
 import com.eftimoff.viewpagertransformers.BaseTransformer;
 import com.eftimoff.viewpagertransformers.CubeOutTransformer;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements ContactFragment.OnFragmentInteractionListener {
 
     private PageAdapter mAdapter2;
     @Override
@@ -32,6 +33,11 @@ public class MainActivity extends AppCompatActivity {
         pager.setPageTransformer(true, new CubeOutTransformer(){
 
         });
+    }
+
+    @Override
+    public void onFragmentInteraction(Uri uri) {
+
     }
 
     public class CubeOutTransformer extends BaseTransformer {
@@ -50,36 +56,26 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    public static class PlaceholderFragment extends Fragment {
-
-        private static final String EXTRA_POSITION = "EXTRA_POSITION";
-        private static final int[] COLORS = new int[]{0xFF33B5E5, 0xFFAA66CC, 0xFF99CC00, 0xFFFFBB33, 0xFFFF4444};
-
-        @Override
-        public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-            final int position = getArguments().getInt(EXTRA_POSITION);
-            final TextView textViewPosition = (TextView) inflater.inflate(R.layout.fragment_main, container, false);
-            textViewPosition.setText(Integer.toString(position));
-            textViewPosition.setBackgroundColor(COLORS[position - 1]);
-
-            return textViewPosition;
-        }
-
-    }
     public static final class PageAdapter extends FragmentStatePagerAdapter {
+
         public PageAdapter(FragmentManager fm) {
             super(fm);
         }
 
         @Override
         public Fragment getItem(int position) {
-            final Bundle bundle = new Bundle();
-            bundle.putInt(MainActivity.PlaceholderFragment.EXTRA_POSITION, position + 1);
-
-            final MainActivity.PlaceholderFragment fragment = new MainActivity.PlaceholderFragment();
-            fragment.setArguments(bundle);
-
-            return fragment;
+            switch (position) {
+                case 0:
+                    ContactFragment tab1 = new ContactFragment();
+                    return tab1;
+                case 1:
+                    GalleryFragment tab2 = new GalleryFragment();
+                    return tab2;
+                case 2:
+                    SimsimFragment tab3 = new SimsimFragment();
+                    return tab3;
+                default:return null;
+            }
         }
 
         @Override
