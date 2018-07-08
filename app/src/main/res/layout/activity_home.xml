@@ -4,4 +4,10 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <ImageView
+        android:id="@+id/kylie"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:scaleType="fitXY"
+        android:background="@drawable/splashlogo"/>
 </android.support.constraint.ConstraintLayout>

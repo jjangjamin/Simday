@@ -15,6 +15,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TableLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.eftimoff.viewpagertransformers.BaseTransformer;
 import com.eftimoff.viewpagertransformers.CubeOutTransformer;
@@ -34,7 +35,14 @@ public class MainActivity extends AppCompatActivity implements ContactFragment.O
 
         });
     }
-
+    private static long back_pressed;
+    @Override
+    public void onBackPressed()
+    {
+        if (back_pressed + 2000 > System.currentTimeMillis()) super.onBackPressed();
+        else Toast.makeText(getBaseContext(), "앱을 종료하시려면 뒤로가기 한번 더!", Toast.LENGTH_SHORT).show();
+        back_pressed = System.currentTimeMillis();
+    }
     @Override
     public void onFragmentInteraction(Uri uri) {
 
@@ -77,6 +85,8 @@ public class MainActivity extends AppCompatActivity implements ContactFragment.O
                 default:return null;
             }
         }
+
+
 
         @Override
         public int getCount() {
