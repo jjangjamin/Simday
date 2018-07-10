@@ -77,7 +77,7 @@
         <style name="TicketBtn">
             <item name="android:gravity">center</item>
             <item name="android:layout_gravity">center</item>
-            <item name="android:textColor">@color/cSkyblue</item>
+            <item name="android:textColor">@color/cBlack</item>
             <item name="android:paddingBottom">7dp</item>
             <item name="android:paddingTop">7dp</item>
             <item name="android:paddingEnd">15dp</item>
