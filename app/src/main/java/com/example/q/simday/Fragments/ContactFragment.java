@@ -32,15 +32,28 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
+
+import com.example.q.simday.Activity.LoginActivity;
+import com.example.q.simday.Activity.MainActivity;
 import com.example.q.simday.Adapters.RecyclerAdapter;
 import com.example.q.simday.R;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -52,6 +65,7 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 
 import static com.example.q.simday.R.drawable.contacticon;
+import static com.example.q.simday.R.drawable.ic_launcher_background;
 import static java.net.Proxy.Type.HTTP;
 import static org.apache.commons.lang3.CharEncoding.UTF_8;
 
@@ -64,6 +78,7 @@ import static org.apache.commons.lang3.CharEncoding.UTF_8;
  * create an instance of this fragment.
  */
 public class ContactFragment extends Fragment {
+
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
@@ -96,15 +111,18 @@ public class ContactFragment extends Fragment {
         fragment.setArguments(args);
         return fragment;
     }
-
+String master;
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
             mParam1 = getArguments().getString(ARG_PARAM1);
             mParam2 = getArguments().getString(ARG_PARAM2);
+
         }
+
     }
+
     RecyclerView recyclerView;
     RecyclerView.LayoutManager layoutManager;
     RecyclerView.Adapter adapter;
@@ -118,7 +136,6 @@ public class ContactFragment extends Fragment {
     private HashMap<String, Contact> hashed_contact_list;
     private ArrayList<Contact> contact_list;
     private ArrayList<String> name_list;
-
     private static int POST_SUCCESS = 1;
 
 
@@ -127,7 +144,9 @@ public class ContactFragment extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View v =  inflater.inflate(R.layout.fragment_contact, container, false);
+        super.onCreate(savedInstanceState);
         recyclerView = (RecyclerView)v.findViewById(R.id.recycler_view);
+
         layoutManager = new LinearLayoutManager(getActivity());
         recyclerView.setLayoutManager(layoutManager);
          checkandRequestPermissions();
@@ -135,6 +154,9 @@ public class ContactFragment extends Fragment {
          recyclerView.setAdapter(adapter);
          callbuttons = (Button)v.findViewById(R.id.callbutton);
          messagebutton = (Button)v.findViewById(R.id.messagebutton);
+
+
+
 
          localContact = GetContact();
          name_list = new ArrayList<>(localContact.keySet());
@@ -153,22 +175,22 @@ public class ContactFragment extends Fragment {
 
 
 
+         /*uploadbutton.setOnClickListener(new View.OnClickListener(){
+            Cursor cursor2 = getActivity().getContentResolver().query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI, null, null, null, null);
+            @Override
+            public void onClick(View view) {
+                if(cursor2.getCount() >0){
+                    while (cursor2.moveToNext()){
 
-         uploadbutton.setOnClickListener(new View.OnClickListener(){
-             Cursor cursor2 = getActivity().getContentResolver().query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI, null, null, null, null);
-             @Override
-             public void onClick(View view) {
-                 if(cursor2.getCount() >0){
-                     while (cursor2.moveToNext()){
-
-                         new UploadTask(localContact.get(name)).execute();
-                     }
-                 }
-
+                        new UploadTask(localContact.get(name)).execute();
+                    }
+                }
 
 
-             }
-         });
+
+            }
+        });*/
+
         return v;
     }
 
@@ -182,6 +204,7 @@ public class ContactFragment extends Fragment {
 
 
     private List<User> getUserInformation() {
+
         cursor = getActivity().getContentResolver().query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI, null, null, null, null);
         if (cursor.getCount() > 0) {
             while (cursor.moveToNext()) {
@@ -189,6 +212,7 @@ public class ContactFragment extends Fragment {
                 phonenumber = cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
                 profilepic = cursor.getInt(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.PHOTO_URI));
                 userList.add(new User(contacticon, name, phonenumber, "haha"));
+                new UploadTask().execute("http://52.231.64.79:8080/api/contacts/", name, phonenumber);
             }
             cursor.close();
         }
@@ -367,31 +391,106 @@ public class ContactFragment extends Fragment {
         }
     }
 
-        private  class UploadTask extends AsyncTask {
-            private Contact UploadContact;
-            public UploadTask(Contact UploadContact) {
-                this.UploadContact = UploadContact;
-            }
+        private  class UploadTask extends AsyncTask<String, String, String> {
             @Override
-            protected Object doInBackground(Object[] objects) {
+            protected String doInBackground(String... params) {
+                try{
+
+
+                    Intent master2 = getActivity().getIntent();
+                    master = master2.getExtras().getString("master");
+                    Log.d("master","222222222"+ master);
+
+
+                    JSONObject jsonObject = new JSONObject();
+                    jsonObject.accumulate("name",params[1]);
+                    jsonObject.accumulate("number",params[2]);
+                    jsonObject.accumulate("master",master);
+                    jsonObject.accumulate("photo","");
+                    HttpURLConnection con = null;
+                    BufferedReader reader = null;
+                    try {
+                        URL url = new URL(params[0]);
+                        con = (HttpURLConnection) url.openConnection();
+                        con.setRequestMethod("POST");
+                        con.setRequestProperty("Cache-Control", "no-cache");
+                        con.setRequestProperty("Content-Type", "application/json");
+                        con.setRequestProperty("Accept", "text/html");
+                        con.setDoOutput(true);
+                        con.setDoInput(true);
+                        con.connect();
+                        OutputStream outStream = con.getOutputStream();
+
+                        //버퍼를 생성하고 넣음
+
+                        BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(outStream));
+
+                        writer.write(jsonObject.toString());
+
+                        writer.flush();
+
+                        writer.close();
+
+                        InputStream stream = con.getInputStream();
+
+                        reader = new BufferedReader(new InputStreamReader(stream));
+
+                        StringBuffer buffer = new StringBuffer();
+
+                        String line = "";
+
+                        while ((line = reader.readLine()) != null) {
+
+                            buffer.append(line);
+                        }
+                        return buffer.toString();
+                    }catch (MalformedURLException e) {
+                        e.printStackTrace();
+                    }catch (IOException e) {
+                        e.printStackTrace();
+                    }finally{
+                        if(con!=null){
+                            con.disconnect();
+                        }
+                        try{
+                            if(reader!=null){
+                                reader.close();
+                            }
+                        }catch (IOException e){
+                            e.printStackTrace();
+                        }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                return null;
+            }
+        }
+
+
+
+
+
+        /*@Override
+            protected String doInBackground(String... params) {
                 String jsonResponse = "";
                 Log.d("**************", "aaaaaaaaaaaaaaa");
                 try {
                     HttpClient httpClient = new DefaultHttpClient();
-                    String urlString = "http://52.231.64.79:8080/api/contacts/";
+                    String urlString = params[0];
                     URI url = new URI(urlString);
                     HttpPost httpPost = new HttpPost(url);
-                    List<NameValuePair> params = new ArrayList<>();
-                    params.add(new BasicNameValuePair("master", UploadContact.name));
-                    params.add(new BasicNameValuePair("name", UploadContact.name));
-                    params.add(new BasicNameValuePair("phone", UploadContact.phone));
-                    params.add(new BasicNameValuePair("profileImage", UploadContact.profileImage));
-                    UrlEncodedFormEntity ent = new UrlEncodedFormEntity(params, UTF_8);
+                    List<NameValuePair> params2 = new ArrayList<>();
+                    params2.add(new BasicNameValuePair("master", "hh"));
+                    params2.add(new BasicNameValuePair("name", params[1]));
+                    params2.add(new BasicNameValuePair("phone", params[2]));
+                    //params2.add(new BasicNameValuePair("profileImage", UploadContact.profileImage));
+                    UrlEncodedFormEntity ent = new UrlEncodedFormEntity(params2, UTF_8);
                     httpPost.setEntity(ent);
                     HttpResponse response = httpClient.execute(httpPost);
                     jsonResponse = EntityUtils.toString(response.getEntity(), UTF_8);
                     JSONObject obj = new JSONObject(jsonResponse);
-                    return obj.getInt("result");
+                    return obj.get("result").toString();
                 } catch (IOException e) {
                     getActivity().runOnUiThread(new Runnable() {
                         @Override
@@ -405,9 +504,10 @@ public class ContactFragment extends Fragment {
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
-                return 0;
-            }
+                return "0";
+            }*/
 
+/*
             @Override
             protected void onPostExecute(Object o) {
                 if ((int) o == POST_SUCCESS) {
@@ -415,10 +515,8 @@ public class ContactFragment extends Fragment {
                 } else {
                     Toast.makeText(getActivity(), "error to post", Toast.LENGTH_SHORT).show();
                 }
-            }
+            }*/
 
 
-
-        }
 
 }

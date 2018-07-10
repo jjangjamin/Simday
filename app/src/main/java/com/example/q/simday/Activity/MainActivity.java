@@ -1,5 +1,6 @@
 package com.example.q.simday.Activity;
 
+import android.content.Intent;
 import android.net.Uri;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -7,6 +8,7 @@ import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v4.view.ViewPager;
+import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
@@ -19,10 +21,27 @@ import com.example.q.simday.R;
 public class MainActivity extends AppCompatActivity implements ContactFragment.OnFragmentInteractionListener {
 
     private PageAdapter mAdapter2;
+    String master;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+
+        if (savedInstanceState == null) {
+            Bundle extras = getIntent().getExtras();
+            if(extras == null) {
+                master= null;
+                Log.i("master","@@@nooooo@@@"+master);
+            } else {
+                master= (String) extras.get("master");
+                Log.i("master","@@@yeahhhhhhhhhh@@@"+master);
+            }
+        } else {
+            master= (String) savedInstanceState.getSerializable("master");
+            Log.i("master","@@@@@@"+master);
+        }
+
 
         mAdapter2 = new PageAdapter(getSupportFragmentManager());
         ViewPager pager = (ViewPager) findViewById(R.id.container);
@@ -89,5 +108,11 @@ public class MainActivity extends AppCompatActivity implements ContactFragment.O
             return 3;
         }
     }
+
+    public String getMyData() {
+        Log.i("master","@@@@@"+master);
+        return master;
+    }
+
 
 }

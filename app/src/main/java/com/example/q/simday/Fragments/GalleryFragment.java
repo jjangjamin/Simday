@@ -1,9 +1,12 @@
 package com.example.q.simday.Fragments;
 
 import android.content.Context;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.support.v4.app.Fragment;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,11 +22,16 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.TypedValue;
 import android.widget.ImageView;
+import android.widget.SeekBar;
+import android.widget.TextView;
+
 import com.bumptech.glide.Glide;
 import com.example.q.simday.Adapters.AlbumsAdapter;
 import com.example.q.simday.Stuff.Album;
 import com.example.q.simday.R;
 
+import java.io.File;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -39,6 +47,33 @@ import java.util.List;
 public class GalleryFragment extends Fragment {
 
     static final int PICK_IMAGE = 1;
+
+
+    private ArrayList<String> getPathOfAllImages() {
+        ArrayList<String> result = new ArrayList<>();
+        Uri uri = android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+        String[] projection = {MediaStore.MediaColumns.DATA, MediaStore.MediaColumns.DISPLAY_NAME};
+
+        Cursor cursor = getActivity().getContentResolver().query(uri, projection, null, null, MediaStore.MediaColumns.DATE_ADDED + " desc");
+        int columnIndex = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DATA);
+        int columnDisplayname = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DISPLAY_NAME);
+
+        int lastIndex;
+        while (cursor.moveToNext()) {
+            String absolutePathOfImage = cursor.getString(columnIndex);
+            String nameOfFile = cursor.getString(columnDisplayname);
+            lastIndex = absolutePathOfImage.lastIndexOf(nameOfFile);
+            lastIndex = lastIndex >= 0 ? lastIndex : nameOfFile.length() - 1;
+
+            if (!TextUtils.isEmpty(absolutePathOfImage)) {
+                result.add(absolutePathOfImage);
+            }
+        }
+        return result;
+    }
+
+
+
 
     public GridView gridViews;
 
@@ -83,7 +118,13 @@ public class GalleryFragment extends Fragment {
             mParam2 = getArguments().getString(ARG_PARAM2);
         }
     }
-
+    View view;
+    GridView gridview;
+    SeekBar seekBar;
+    TextView seekText;
+    public static ArrayList<File> galleryId = new ArrayList<>();
+    ArrayList<String> paths = new ArrayList<>();
+    ArrayList<URL> galleryurl = new ArrayList<>();
     private RecyclerView recyclerView;
     private AlbumsAdapter adapter;
     private List<Album> albumList;

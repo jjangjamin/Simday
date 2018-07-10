@@ -17,7 +17,6 @@ import com.example.q.simday.R;
 
 public class LoadingActivity extends AppCompatActivity {
     private static int SPLASH_TIME_OUT = 5000;
-
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
