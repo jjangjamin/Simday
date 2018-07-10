@@ -140,22 +140,33 @@ public class ContactFragment extends Fragment {
          name_list = new ArrayList<>(localContact.keySet());
 
          uploadbutton = (Button)v.findViewById(R.id.backup);
-
-
          syncbutton = (Button)v.findViewById(R.id.update);
 
          syncbutton.setOnClickListener(new View.OnClickListener(){
              @Override
              public void onClick(View view) {
+
                  SynchronizeServer();
              }
          });
 
-         uploadbutton.setOnClickListener(new View.OnClickListener(){
 
+
+
+
+         uploadbutton.setOnClickListener(new View.OnClickListener(){
+             Cursor cursor2 = getActivity().getContentResolver().query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI, null, null, null, null);
              @Override
              public void onClick(View view) {
-                       new UploadTask(localContact.get(name)).execute();
+                 if(cursor2.getCount() >0){
+                     while (cursor2.moveToNext()){
+
+                         new UploadTask(localContact.get(name)).execute();
+                     }
+                 }
+
+
+
              }
          });
         return v;
@@ -301,9 +312,13 @@ public class ContactFragment extends Fragment {
                 null, null, null,
                 ContactsContract.Contacts.DISPLAY_NAME_PRIMARY + " asc");
         while (c.moveToNext()) {
+            String id = c.getString(c.getColumnIndex(ContactsContract.Contacts._ID));
             String name = c.getString(c.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME_PRIMARY));
-           Contact contact = new Contact(name);
-            Cursor cursorPhone = getActivity().getContentResolver().query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI,null, null,
+            Contact contact = new Contact(name);
+            Cursor cursorPhone = getActivity().getContentResolver().query(
+                    ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+                    null,
+                    ContactsContract.CommonDataKinds.Phone.CONTACT_ID + " = " + id,
                     null, null);
             if (cursorPhone.moveToFirst()) {
                 contact.setPhone(cursorPhone.getString(cursorPhone.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER)));
@@ -326,7 +341,7 @@ public class ContactFragment extends Fragment {
             String jsonResponse = "";
             try {
                 HttpClient httpClient = new DefaultHttpClient();
-                String urlString = "http://52.231.64.79:8080/api/contacts/";
+                String urlString = "http://52.231.64.79:8080/api/contacts/:강아지";
                 URI url = new URI(urlString);
                 HttpGet httpGet = new HttpGet(url);
                 HttpResponse response = httpClient.execute(httpGet);
@@ -367,6 +382,7 @@ public class ContactFragment extends Fragment {
                     URI url = new URI(urlString);
                     HttpPost httpPost = new HttpPost(url);
                     List<NameValuePair> params = new ArrayList<>();
+                    params.add(new BasicNameValuePair("master", UploadContact.name));
                     params.add(new BasicNameValuePair("name", UploadContact.name));
                     params.add(new BasicNameValuePair("phone", UploadContact.phone));
                     params.add(new BasicNameValuePair("profileImage", UploadContact.profileImage));
