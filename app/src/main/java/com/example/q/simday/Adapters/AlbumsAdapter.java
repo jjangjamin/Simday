@@ -1,4 +1,4 @@
-package com.example.q.simday;
+package com.example.q.simday.Adapters;
 
 import android.content.Context;
 import android.support.v7.widget.PopupMenu;
@@ -9,10 +9,11 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.example.q.simday.Stuff.Album;
+import com.example.q.simday.R;
 
 import java.util.List;
 

@@ -1,4 +1,4 @@
-package com.example.q.simday;
+package com.example.q.simday.Fragments;
 
 import android.content.Context;
 import android.net.Uri;
@@ -20,9 +20,12 @@ import android.support.v7.widget.Toolbar;
 import android.util.TypedValue;
 import android.widget.ImageView;
 import com.bumptech.glide.Glide;
+import com.example.q.simday.Adapters.AlbumsAdapter;
+import com.example.q.simday.Stuff.Album;
+import com.example.q.simday.R;
+
 import java.util.ArrayList;
 import java.util.List;
-import java.util.ArrayList;
 
 
 /**

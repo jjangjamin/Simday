@@ -1,11 +1,13 @@
-package com.example.q.simday;
+package com.example.q.simday.Adapters;
 
-import android.graphics.Typeface;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+
+import com.example.q.simday.Stuff.Message;
+import com.example.q.simday.R;
 
 import java.util.ArrayList;
 

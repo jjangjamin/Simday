@@ -1,4 +1,4 @@
-package com.example.q.simday;
+package com.example.q.simday.Stuff;
 
 /**
  * Created by VMac on 17/11/16.

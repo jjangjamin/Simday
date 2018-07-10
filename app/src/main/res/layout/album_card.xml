@@ -33,6 +33,8 @@
                 android:layout_marginTop="@dimen/ic_album_overflow_margin_top"
                 android:scaleType="centerCrop"
                 android:src="@drawable/ic_dots" />
+
+
         </RelativeLayout>
 
     </android.support.v7.widget.CardView>

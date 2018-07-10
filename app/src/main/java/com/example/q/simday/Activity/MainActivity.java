@@ -1,24 +1,20 @@
-package com.example.q.simday;
+package com.example.q.simday.Activity;
 
 import android.net.Uri;
-import android.support.annotation.NonNull;
-import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
-import android.support.v4.view.PagerAdapter;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v4.view.ViewPager;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.TableLayout;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.eftimoff.viewpagertransformers.BaseTransformer;
-import com.eftimoff.viewpagertransformers.CubeOutTransformer;
+import com.example.q.simday.Fragments.ContactFragment;
+import com.example.q.simday.Fragments.GalleryFragment;
+import com.example.q.simday.Fragments.SimsimFragment;
+import com.example.q.simday.R;
 
 public class MainActivity extends AppCompatActivity implements ContactFragment.OnFragmentInteractionListener {
 

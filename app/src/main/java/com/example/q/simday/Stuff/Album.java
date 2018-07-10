@@ -1,4 +1,4 @@
-package com.example.q.simday;
+package com.example.q.simday.Stuff;
 
 /**
  * Created by Lincoln on 18/05/16.

@@ -1,4 +1,4 @@
-package com.example.q.simday;
+package com.example.q.simday.Activity;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -13,6 +13,7 @@ import android.widget.TextView;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.request.target.GlideDrawableImageViewTarget;
+import com.example.q.simday.R;
 
 public class LoadingActivity extends AppCompatActivity {
     private static int SPLASH_TIME_OUT = 5000;
@@ -32,14 +33,13 @@ public class LoadingActivity extends AppCompatActivity {
         anim.setRepeatMode(Animation.REVERSE);
         anim.setRepeatCount(Animation.INFINITE);
         loadingtext.startAnimation(anim);
+
         new Handler().postDelayed(new Runnable(){
             @Override
             public void run(){
                 Intent mainIntent = new Intent(LoadingActivity.this, MainActivity.class);
                 startActivity(mainIntent);
                 finish();
-
-
                 overridePendingTransition(R.anim.fadein, R.anim.fadeout);
             }
         },SPLASH_TIME_OUT);
