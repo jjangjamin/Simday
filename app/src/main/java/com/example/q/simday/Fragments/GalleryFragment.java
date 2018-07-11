@@ -1,19 +1,23 @@
 package com.example.q.simday.Fragments;
 
 import android.Manifest;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.drawable.AnimationDrawable;
+import android.graphics.drawable.Drawable;
 import android.media.Image;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -24,6 +28,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.GridView;
 import android.widget.ImageView;
 
@@ -57,7 +62,10 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 
+import pl.droidsonroids.gif.GifImageView;
+
 import static com.example.q.simday.R.drawable.contacticon;
+import static com.example.q.simday.R.drawable.uploading;
 
 public class GalleryFragment extends Fragment {
 
@@ -70,12 +78,15 @@ public class GalleryFragment extends Fragment {
     private Integer onchange ;
     String master;
     JSONArray down;
+    ImageView uploadingicon;
+    FrameLayout upload;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
         }
+
     }
 
     @Override
@@ -90,6 +101,11 @@ public class GalleryFragment extends Fragment {
         GlideDrawableImageViewTarget gifImage = new GlideDrawableImageViewTarget(backdrop);
         Glide.with(getActivity()).load(R.drawable.backdropp).into(gifImage);
 
+        uploadingicon = (ImageView)v.findViewById(R.id.uploading);
+        GlideDrawableImageViewTarget gifImage2 = new GlideDrawableImageViewTarget(uploadingicon);
+        Glide.with(getActivity()).load(R.drawable.uploading).into(gifImage2);
+
+        uploadingicon.setVisibility(View.GONE);
         Button refresh = (Button)v.findViewById(R.id.showupload);
         checkPermission();
 
@@ -179,11 +195,101 @@ public class GalleryFragment extends Fragment {
             mGridView.setAdapter(new AlbumsAdapter(getActivity(), dataList2));
             onchange=1;
 
+
+
+            mGridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
+                    if (AccessToken.getCurrentAccessToken()!=null)master= AccessToken.getCurrentAccessToken().getUserId();
+                    if (master==null) master="JJJ";
+
+                    new deleteDownTask().execute("http://52.231.69.25:8080/api/deleteimage", dataListname.get(position) ,dataList2.get(position));
+                    Log.i("master",dataListname.get(position)+dataList2.get(position));
+
+                    //Intent i = new Intent(getActivity().getApplicationContext(), FullImageActivity.class);
+                    //i.putExtra("id", position);
+                    //startActivity(i);
+                }
+            });
+
+
         }
 
     }
 
+    private class deleteDownTask extends AsyncTask<String, String, String> {
+        @Override
+        protected String doInBackground(String... params) {
+            try{
+                JSONObject jsonObject = new JSONObject();
+                jsonObject.accumulate("name",params[1]);
+                jsonObject.accumulate("image",params[2]);
+                jsonObject.accumulate("master",master);
+                HttpURLConnection con;
+                URL url = new URL(params[0]);
+                con = (HttpURLConnection) url.openConnection();
+                con.setRequestMethod("POST");
+                con.setRequestProperty("Cache-Control", "no-cache");
+                con.setRequestProperty("Content-Type", "application/json");
+                con.setRequestProperty("Accept", "text/html");
+                con.setDoOutput(true);
+                con.setDoInput(true);
+                con.connect();
 
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            HttpClient client2 = new DefaultHttpClient();
+            String getURL2 = "http://52.231.69.25:8080/api/photos/"+master;
+            HttpGet get2 = new HttpGet(getURL2);
+            HttpResponse responseGet2 = null;
+            try {
+                responseGet2 = client2.execute(get2);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            HttpEntity resEntityGet = responseGet2.getEntity();
+            String json_string = null;
+            try {
+                json_string = EntityUtils.toString(resEntityGet);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            try {
+                down=new JSONArray(json_string);
+                return new JSONArray(json_string).toString();
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            return getURL2;
+
+        }
+
+        @Override
+        protected void onPostExecute(String s) {
+            dataList2 = new ArrayList<>();
+            dataListname = new ArrayList<>();
+
+            for(int i=0; i < down.length(); i++) {
+                JSONObject obj= null;
+                try {
+                    obj = down.getJSONObject(i);
+                    String tn = obj.getString("img");
+                    dataList2.add(tn);
+                    String name = obj.getString("name");
+                    dataListname.add(name);
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            mGridView.setAdapter(new AlbumsAdapter(getActivity(), dataList2));
+            onchange=1;
+        }
+
+    }
 
     private void checkPermission() {
         int permissionCheck = ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.READ_EXTERNAL_STORAGE);
@@ -262,13 +368,27 @@ public class GalleryFragment extends Fragment {
         mGridView.setAdapter(new AlbumsAdapter(getActivity(), dataList2));
         mGridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
+            public void onItemClick(AdapterView<?> adapterView, final View view, final int position, long id) {
+                new AlertDialog.Builder(getActivity()).setTitle("업로드").setMessage("선택하신 사진을 업로드 하시겠습니까?").setIcon(android.R.drawable.ic_input_add)
+                        .setPositiveButton("예", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int i) {
+                                if (AccessToken.getCurrentAccessToken()!=null)master= AccessToken.getCurrentAccessToken().getUserId();
+                                if (master==null) master="JJJ";
 
-                if (AccessToken.getCurrentAccessToken()!=null)master= AccessToken.getCurrentAccessToken().getUserId();
-                if (master==null) master="JJJ";
+                                new UploadTask().execute("http://52.231.69.25:8080/api/photos", dataListname.get(position),dataList2.get(position));
+                                Log.i("master",dataListname.get(position)+dataList2.get(position));
 
-                new UploadTask().execute("http://52.231.69.25:8080/api/photos", dataListname.get(position),dataList2.get(position));
-                Log.i("master",dataListname.get(position)+dataList2.get(position));
+                                Handler handler = new Handler();
+                                handler.postDelayed(new Runnable() {
+                                    public void run() {
+                                      uploadingicon.setVisibility(View.VISIBLE);
+                                    }
+                                }, 1500);  //
+                            }
+                        })
+                        .setNegativeButton("아니오", null).show();
+
 
                 //Intent i = new Intent(getActivity().getApplicationContext(), FullImageActivity.class);
                 //i.putExtra("id", position);
@@ -276,6 +396,8 @@ public class GalleryFragment extends Fragment {
             }
         });
     }
+
+
 
     private  class UploadTask extends AsyncTask<String, String, String> {
         @Override

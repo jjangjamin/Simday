@@ -1,7 +1,9 @@
 package com.example.q.simday.Fragments;
 
 import android.Manifest;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
@@ -12,8 +14,10 @@ import android.provider.ContactsContract;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.widget.AlertDialogLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.telephony.SmsManager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -144,20 +148,46 @@ String master;
          checkandRequestPermissions();
          adapter = new RecyclerAdapter(getUserInformation(), getActivity());
          recyclerView.setAdapter(adapter);
-
-
          callbuttons = (Button)v.findViewById(R.id.callbutton);
          messagebutton = (Button)v.findViewById(R.id.messagebutton);
-
-
-
-
          localContact = GetContact();
          name_list = new ArrayList<>(localContact.keySet());
+        recyclerView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                int position = recyclerView.getChildAdapterPosition(view);
+                AlertDialog.Builder alert = new AlertDialog.Builder(getActivity());
+                alert.setTitle("연락하기");
+                alert.setMessage(name + " 한테 술 먹자고 연락해봐요?").setIcon(android.R.drawable.ic_dialog_dialer)
+                        .setPositiveButton("전화걸기", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int i) {
+                                Intent intent = new Intent(Intent.ACTION_CALL);
+                                intent.setData(Uri.parse("tel:" + phonenumber));
+                                try {
+                                    startActivity(intent);
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        })
+                        .setNegativeButton("문자보내기", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int i) {
+                                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.fromParts("sms",phonenumber,null));
+                                try {
+                                    startActivity(intent);
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        })
 
+                        .setNeutralButton("취소", null).show();
+            }
+        });
          uploadbutton = (Button)v.findViewById(R.id.backup);
          syncbutton = (Button)v.findViewById(R.id.update);
-
          syncbutton.setOnClickListener(new View.OnClickListener(){
              @Override
              public void onClick(View view) {
@@ -180,7 +210,43 @@ String master;
             }
         });
         return v;
+    };
+
+/*private final View.OnClickListener mOnClickListener = new View.OnClickListener() {
+    @Override
+    public void onClick(View view) {
+        int position = recyclerView.getChildAdapterPosition(view);
+        AlertDialog.Builder alert = new AlertDialog.Builder(getActivity());
+        alert.setTitle("연락하기");
+        alert.setMessage(name + " 한테 술 먹자고 연락해봐요?").setIcon(android.R.drawable.ic_dialog_dialer)
+                .setPositiveButton("전화걸기", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        Intent intent = new Intent(Intent.ACTION_CALL);
+                        intent.setData(Uri.parse("tel:" + phonenumber));
+                        try {
+                            startActivity(intent);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                })
+                .setNegativeButton("문자보내기", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.fromParts("sms",phonenumber,null));
+                        try {
+                            startActivity(intent);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                })
+
+                .setNeutralButton("취소", null).show();
     }
+};
+*/
 
     public void onActivityResult (int request, int result, Intent data) {
         super.onActivityResult(request, result, data);
@@ -194,6 +260,8 @@ String master;
             e.printStackTrace();
         }
     }
+
+
 
     private void UpUserInformation() {
         //Intent master2 = getActivity().getIntent();
