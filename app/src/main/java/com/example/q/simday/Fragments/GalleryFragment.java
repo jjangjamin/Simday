@@ -48,8 +48,7 @@ public class GalleryFragment extends Fragment {
 
     static final int PICK_IMAGE = 1;
 
-
-    private ArrayList<String> getPathOfAllImages() {
+    private ArrayList<String> prepareAlbums() {
         ArrayList<String> result = new ArrayList<>();
         Uri uri = android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
         String[] projection = {MediaStore.MediaColumns.DATA, MediaStore.MediaColumns.DISPLAY_NAME};
@@ -70,6 +69,7 @@ public class GalleryFragment extends Fragment {
             }
         }
         return result;
+
     }
 
 
@@ -185,52 +185,7 @@ public class GalleryFragment extends Fragment {
     }
 
 
-    private void prepareAlbums() {
-        int[] covers = new int[]{
-                R.drawable.album1,
-                R.drawable.album2,
-                R.drawable.album3,
-                R.drawable.album4,
-                R.drawable.album5,
-                R.drawable.album6,
-                R.drawable.album7,
-                R.drawable.album8,
-                R.drawable.album9,
-                R.drawable.album10,
-                R.drawable.album11};
 
-        Album a = new Album(covers[0]);
-        albumList.add(a);
-
-        a = new Album(covers[1]);
-        albumList.add(a);
-
-        a = new Album(covers[2]);
-        albumList.add(a);
-
-        a = new Album(covers[3]);
-        albumList.add(a);
-
-        a = new Album(covers[4]);
-        albumList.add(a);
-
-        a = new Album(covers[5]);
-        albumList.add(a);
-
-        a = new Album(covers[6]);
-        albumList.add(a);
-
-        a = new Album(covers[7]);
-        albumList.add(a);
-
-        a = new Album(covers[8]);
-        albumList.add(a);
-
-        a = new Album(covers[9]);
-        albumList.add(a);
-
-        adapter.notifyDataSetChanged();
-    }
 
     public class GridSpacingItemDecoration extends RecyclerView.ItemDecoration {
 

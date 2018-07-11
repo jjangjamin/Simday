@@ -22,25 +22,16 @@ public class MainActivity extends AppCompatActivity implements ContactFragment.O
 
     private PageAdapter mAdapter2;
     String master;
+    Intent master2;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-
-        if (savedInstanceState == null) {
-            Bundle extras = getIntent().getExtras();
-            if(extras == null) {
-                master= null;
-                Log.i("master","@@@nooooo@@@"+master);
-            } else {
-                master= (String) extras.get("master");
-                Log.i("master","@@@yeahhhhhhhhhh@@@"+master);
-            }
-        } else {
-            master= (String) savedInstanceState.getSerializable("master");
-            Log.i("master","@@@@@@"+master);
-        }
+/*
+        master2=getIntent();
+        master=master2.getStringExtra("master");
+        Log.i("master","@@@yeahhhhhhhhhh@@@"+master);
+*/
 
 
         mAdapter2 = new PageAdapter(getSupportFragmentManager());

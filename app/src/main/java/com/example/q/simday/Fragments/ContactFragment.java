@@ -22,28 +22,24 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.Toast;
+
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
-import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 
-import com.example.q.simday.Activity.LoginActivity;
-import com.example.q.simday.Activity.MainActivity;
 import com.example.q.simday.Adapters.RecyclerAdapter;
 import com.example.q.simday.R;
+import com.facebook.AccessToken;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -51,23 +47,12 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import okhttp3.MediaType;
-import okhttp3.MultipartBody;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.Response;
 
 import static com.example.q.simday.R.drawable.contacticon;
-import static com.example.q.simday.R.drawable.ic_launcher_background;
-import static java.net.Proxy.Type.HTTP;
-import static org.apache.commons.lang3.CharEncoding.UTF_8;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -126,10 +111,13 @@ String master;
     RecyclerView recyclerView;
     RecyclerView.LayoutManager layoutManager;
     RecyclerView.Adapter adapter;
+    RecyclerView.Adapter newadapter;
     Cursor cursor;
     String name, phonenumber;
     int profilepic;
     List<User> userList = new ArrayList<>();
+    List<User> newuserList = new ArrayList<>();
+    JSONArray resq;
     Button callbuttons, messagebutton;
     Button uploadbutton, syncbutton;
     private HashMap<String, Contact> localContact;
@@ -152,6 +140,8 @@ String master;
          checkandRequestPermissions();
          adapter = new RecyclerAdapter(getUserInformation(), getActivity());
          recyclerView.setAdapter(adapter);
+
+
          callbuttons = (Button)v.findViewById(R.id.callbutton);
          messagebutton = (Button)v.findViewById(R.id.messagebutton);
 
@@ -167,44 +157,93 @@ String master;
          syncbutton.setOnClickListener(new View.OnClickListener(){
              @Override
              public void onClick(View view) {
-
-                 SynchronizeServer();
+                 try {
+                     try {
+                         DownUserInformation();
+                     } catch (IOException e) {
+                         e.printStackTrace();
+                     }
+                 } catch (JSONException e) {
+                     e.printStackTrace();
+                 }
              }
          });
 
-
-
-
-         /*uploadbutton.setOnClickListener(new View.OnClickListener(){
-            Cursor cursor2 = getActivity().getContentResolver().query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI, null, null, null, null);
+         uploadbutton.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View view) {
-                if(cursor2.getCount() >0){
-                    while (cursor2.moveToNext()){
-
-                        new UploadTask(localContact.get(name)).execute();
-                    }
-                }
-
-
-
+                UpUserInformation();
             }
-        });*/
-
+        });
         return v;
     }
 
     public void onActivityResult (int request, int result, Intent data) {
         super.onActivityResult(request, result, data);
-        SynchronizeServer();
+        try {
+            try {
+                DownUserInformation();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void UpUserInformation() {
+        //Intent master2 = getActivity().getIntent();
+        //master = master2.getExtras().getString("master");
+        if (AccessToken.getCurrentAccessToken()!=null)master= AccessToken.getCurrentAccessToken().getUserId();
+        if (master==null) master="JJJ";
+        Log.d("master","222222222"+ master);
+        new UploadTask().execute("http://52.231.64.79:8080/api/deletecon",name,phonenumber);
+        Cursor cursor2 = getActivity().getContentResolver().query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI, null, null, null, null);
+        if (cursor2.getCount() > 0) {
+            while (cursor2.moveToNext()) {
+                name = cursor2.getString(cursor2.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME));
+                phonenumber = cursor2.getString(cursor2.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
+                profilepic = cursor2.getInt(cursor2.getColumnIndex(ContactsContract.CommonDataKinds.Phone.PHOTO_URI));
+                new UploadTask().execute("http://52.231.64.79:8080/api/contacts",name,phonenumber);
+                Log.i("doing",name);
+            }
+            cursor.close();
+        }}
+
+    private void DownUserInformation() throws JSONException, IOException {
+        newuserList = new ArrayList<>();
+        if (AccessToken.getCurrentAccessToken()!=null)master= AccessToken.getCurrentAccessToken().getUserId();
+        if (master==null) master="JJJ";
+        Log.d("master","222222222"+ master);
+        JSONArray test = new JSONArray();
+        JSONObject data1=new JSONObject();
+        data1.put("name","사람1");
+        data1.put("num","번호1");
+        JSONObject data2=new JSONObject();
+        data2.put("name","사람2");
+        data2.put("num","번호2");
+        JSONObject data3=new JSONObject();
+        data3.put("name","사람3");
+        data3.put("num","번호3");
+        test.put(data1);
+        test.put(data2);
+        test.put(data3);
+
+        resq = new JSONArray();
+        new SynchronizeTask().execute();
+        for(int i=0; i < resq.length(); i++) {
+            JSONObject obj=resq.getJSONObject(i);
+            name = obj.getString("name");
+            phonenumber = obj.getString("num");
+            newuserList.add(new User(contacticon, name, phonenumber, "haha"));
+        }
+
+        newadapter = new RecyclerAdapter(newuserList, getActivity());
+        recyclerView.setAdapter(newadapter);
     }
 
 
-
-
-
     private List<User> getUserInformation() {
-
         cursor = getActivity().getContentResolver().query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI, null, null, null, null);
         if (cursor.getCount() > 0) {
             while (cursor.moveToNext()) {
@@ -212,11 +251,9 @@ String master;
                 phonenumber = cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
                 profilepic = cursor.getInt(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.PHOTO_URI));
                 userList.add(new User(contacticon, name, phonenumber, "haha"));
-                new UploadTask().execute("http://52.231.64.79:8080/api/contacts/", name, phonenumber);
             }
             cursor.close();
         }
-
         return userList;
     }
 
@@ -355,39 +392,34 @@ String master;
     }
 
 
-    public void SynchronizeServer() {
-        new SynchronizeTask().execute();
-    }
 
-    private class SynchronizeTask extends AsyncTask {
+
+    private class SynchronizeTask extends AsyncTask<String, String, String> {
         @Override
-        protected Object doInBackground(Object[] objects) {
-            String jsonResponse = "";
+        protected String doInBackground(String... params) {
+            HttpClient client = new DefaultHttpClient();
+            String getURL = "http://52.231.64.79:8080/api/contacts?master="+master;
+            HttpGet get = new HttpGet(getURL);
+            HttpResponse responseGet = null;
             try {
-                HttpClient httpClient = new DefaultHttpClient();
-                String urlString = "http://52.231.64.79:8080/api/contacts/:강아지";
-                URI url = new URI(urlString);
-                HttpGet httpGet = new HttpGet(url);
-                HttpResponse response = httpClient.execute(httpGet);
-                jsonResponse = EntityUtils.toString(response.getEntity(), UTF_8);
-                JSONArray arr = new JSONArray(jsonResponse);
-                int datalength = arr.length();
-                for (int i = 0; i < arr.length(); i++) {
-                    String obj_name = arr.getJSONObject(i).getString("name");
-                    String obj_phone = arr.getJSONObject(i).getString("phone");
-                    String obj_profileImage = arr.getJSONObject(i).getString("profileImage");
-                    obj_name = obj_name.replace('+', ' ');
-                    localContact.put(obj_name, new Contact(obj_name, obj_phone, obj_profileImage));
-                }
-                return true;
+                responseGet = client.execute(get);
             } catch (IOException e) {
                 e.printStackTrace();
-            } catch (URISyntaxException e) {
+            }
+            HttpEntity resEntityGet = responseGet.getEntity();
+            String json_string = null;
+            try {
+                json_string = EntityUtils.toString(resEntityGet);
+            } catch (IOException e) {
                 e.printStackTrace();
+            }
+            try {
+                resq = new JSONArray(json_string);
+                Log.i("master",resq.toString());
             } catch (JSONException e) {
                 e.printStackTrace();
             }
-            return false;
+            return getURL;
         }
     }
 
@@ -396,17 +428,10 @@ String master;
             protected String doInBackground(String... params) {
                 try{
 
-
-                    Intent master2 = getActivity().getIntent();
-                    master = master2.getExtras().getString("master");
-                    Log.d("master","222222222"+ master);
-
-
                     JSONObject jsonObject = new JSONObject();
                     jsonObject.accumulate("name",params[1]);
                     jsonObject.accumulate("number",params[2]);
                     jsonObject.accumulate("master",master);
-                    jsonObject.accumulate("photo","");
                     HttpURLConnection con = null;
                     BufferedReader reader = null;
                     try {
@@ -422,25 +447,15 @@ String master;
                         OutputStream outStream = con.getOutputStream();
 
                         //버퍼를 생성하고 넣음
-
                         BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(outStream));
-
                         writer.write(jsonObject.toString());
-
                         writer.flush();
-
                         writer.close();
-
                         InputStream stream = con.getInputStream();
-
                         reader = new BufferedReader(new InputStreamReader(stream));
-
                         StringBuffer buffer = new StringBuffer();
-
                         String line = "";
-
                         while ((line = reader.readLine()) != null) {
-
                             buffer.append(line);
                         }
                         return buffer.toString();

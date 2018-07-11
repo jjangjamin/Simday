@@ -71,9 +71,9 @@ public class LoginActivity extends Activity {
                             Log.i("TAG", "AccessToken: " + result.getAccessToken().getToken());
                             Log.i("master","000!!!"+master);
 
-                            Intent master2 = new Intent(LoginActivity.this, MainActivity.class);
-                            master2.putExtra("master",master);
-                            Log.i("master","0000"+master);
+                            //Intent master2 = new Intent(LoginActivity.this, MainActivity.class);
+                            //master2.putExtra("master",master);
+                            //Log.i("master","0000"+master);
 
 
                             Bundle bundle = new Bundle();
@@ -98,6 +98,8 @@ public class LoginActivity extends Activity {
                 request.executeAsync();
 
                 Intent  loadIntent = new Intent(LoginActivity.this, LoadingActivity.class);
+                //loadIntent.putExtra("master",master);
+                //Log.i("master","011111111111221243413500"+master);
                 startActivity(loadIntent);
                 finish();
                 overridePendingTransition(R.anim.fadein, R.anim.fadeout);
@@ -118,10 +120,6 @@ public class LoginActivity extends Activity {
         });
     }
 
-    public String getMyData() {
-        Log.i("master","1111"+master);
-        return master;
-    }
 
 
     @Override

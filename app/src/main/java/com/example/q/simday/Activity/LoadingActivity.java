@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
 import android.widget.ImageView;
@@ -17,6 +18,8 @@ import com.example.q.simday.R;
 
 public class LoadingActivity extends AppCompatActivity {
     private static int SPLASH_TIME_OUT = 5000;
+    String master = "ㅠㅠㅠㅠㅠㅠ";
+    Intent master2;
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -33,10 +36,16 @@ public class LoadingActivity extends AppCompatActivity {
         anim.setRepeatCount(Animation.INFINITE);
         loadingtext.startAnimation(anim);
 
+        //master2=getIntent();
+        //master=master2.getStringExtra("master");
+        //Log.i("master","@@@sssssssss@@@"+master);
+
         new Handler().postDelayed(new Runnable(){
             @Override
             public void run(){
                 Intent mainIntent = new Intent(LoadingActivity.this, MainActivity.class);
+                mainIntent.putExtra("master",master);
+                Log.i("master","0eeeeeeee000"+master);
                 startActivity(mainIntent);
                 finish();
                 overridePendingTransition(R.anim.fadein, R.anim.fadeout);
