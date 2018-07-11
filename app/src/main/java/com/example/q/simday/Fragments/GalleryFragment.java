@@ -1,265 +1,343 @@
 package com.example.q.simday.Fragments;
 
-import android.content.Context;
+import android.Manifest;
+import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
-import android.net.Uri;
+import android.graphics.drawable.AnimationDrawable;
+import android.media.Image;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.support.annotation.NonNull;
+import android.support.design.widget.BottomNavigationView;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
-import android.text.TextUtils;
+import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.Button;
 import android.widget.GridView;
-import android.content.res.Resources;
-import android.graphics.Rect;
-import android.support.design.widget.AppBarLayout;
-import android.support.design.widget.CollapsingToolbarLayout;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.DefaultItemAnimator;
-import android.support.v7.widget.GridLayoutManager;
-import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.Toolbar;
-import android.util.TypedValue;
 import android.widget.ImageView;
-import android.widget.SeekBar;
-import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.target.GlideDrawableImageViewTarget;
+import com.example.q.simday.Activity.FullImageActivity;
 import com.example.q.simday.Adapters.AlbumsAdapter;
-import com.example.q.simday.Stuff.Album;
+import com.example.q.simday.Adapters.RecyclerAdapter;
 import com.example.q.simday.R;
+import com.facebook.AccessToken;
 
-import java.io.File;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.util.EntityUtils;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.List;
 
+import static com.example.q.simday.R.drawable.contacticon;
 
-/**
- * A simple {@link Fragment} subclass.
- * Activities that contain this fragment must implement the
- * {@link GalleryFragment.OnFragmentInteractionListener} interface
- * to handle interaction events.
- * Use the {@link GalleryFragment#newInstance} factory method to
- * create an instance of this fragment.
- */
 public class GalleryFragment extends Fragment {
 
-    static final int PICK_IMAGE = 1;
-
-    private ArrayList<String> prepareAlbums() {
-        ArrayList<String> result = new ArrayList<>();
-        Uri uri = android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
-        String[] projection = {MediaStore.MediaColumns.DATA, MediaStore.MediaColumns.DISPLAY_NAME};
-
-        Cursor cursor = getActivity().getContentResolver().query(uri, projection, null, null, MediaStore.MediaColumns.DATE_ADDED + " desc");
-        int columnIndex = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DATA);
-        int columnDisplayname = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DISPLAY_NAME);
-
-        int lastIndex;
-        while (cursor.moveToNext()) {
-            String absolutePathOfImage = cursor.getString(columnIndex);
-            String nameOfFile = cursor.getString(columnDisplayname);
-            lastIndex = absolutePathOfImage.lastIndexOf(nameOfFile);
-            lastIndex = lastIndex >= 0 ? lastIndex : nameOfFile.length() - 1;
-
-            if (!TextUtils.isEmpty(absolutePathOfImage)) {
-                result.add(absolutePathOfImage);
-            }
-        }
-        return result;
-
-    }
-
-
-
-
-    public GridView gridViews;
-
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
-
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
-
-    private OnFragmentInteractionListener mListener;
-
-    public GalleryFragment() {
-        // Required empty public constructor
-    }
-
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment GalleryFragment.
-     */
-    // TODO: Rename and change types and number of parameters
-    public static GalleryFragment newInstance(String param1, String param2) {
-        GalleryFragment fragment = new GalleryFragment();
-        Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
-        fragment.setArguments(args);
-        return fragment;
-    }
+    protected BottomNavigationView navigationView;
+    private ArrayList<String> dataList1;
+    private ArrayList<String> dataList2;
+    private ArrayList<String> dataListname;
+    private GridView mGridView;
+    private static final int MY_PERMISSIONS_READ_EXTERNAL_STORAGE = 1;
+    private Integer onchange ;
+    String master;
+    JSONArray down;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
         }
     }
-    View view;
-    GridView gridview;
-    SeekBar seekBar;
-    TextView seekText;
-    public static ArrayList<File> galleryId = new ArrayList<>();
-    ArrayList<String> paths = new ArrayList<>();
-    ArrayList<URL> galleryurl = new ArrayList<>();
-    private RecyclerView recyclerView;
-    private AlbumsAdapter adapter;
-    private List<Album> albumList;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        final View v = inflater.inflate(R.layout.fragment_gallery, container, false);
-        Toolbar toolbar = (Toolbar) v.findViewById(R.id.toolbar);
-        ((AppCompatActivity) getActivity()).setSupportActionBar(toolbar);
+        View v =  inflater.inflate(R.layout.fragment_gallery, container, false);
+        super.onCreate(savedInstanceState);
 
-        final CollapsingToolbarLayout collapsingToolbar =
-                (CollapsingToolbarLayout) v.findViewById(R.id.collapsing_toolbar);
-         collapsingToolbar.setTitle("  ");
-        AppBarLayout appBarLayout = (AppBarLayout) v.findViewById(R.id.appbar);
-        appBarLayout.setExpanded(true);
+        mGridView = (GridView)v.findViewById(R.id.gridView);
+        ImageView backdrop = (ImageView)v.findViewById(R.id.backdropimage);
+        GlideDrawableImageViewTarget gifImage = new GlideDrawableImageViewTarget(backdrop);
+        Glide.with(getActivity()).load(R.drawable.backdropp).into(gifImage);
 
-        // hiding & showing the title when toolbar expanded & collapsed
-        appBarLayout.addOnOffsetChangedListener(new AppBarLayout.OnOffsetChangedListener() {
-            boolean isShow = false;
-            int scrollRange = -1;
+        Button refresh = (Button)v.findViewById(R.id.showupload);
+        checkPermission();
 
+        refresh.setOnClickListener(new View.OnClickListener(){
             @Override
-            public void onOffsetChanged(AppBarLayout appBarLayout, int verticalOffset) {
-                if (scrollRange == -1) {
-                    scrollRange = appBarLayout.getTotalScrollRange();
+            public void onClick(View view) {
+                if (onchange==1) {
+                    gallery();
+                }else {
+                    try {
+                        DownImages();
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                 }
-                if (scrollRange + verticalOffset == 0) {
-                    collapsingToolbar.setTitle(getString(R.string.app_name));
-                    isShow = true;
-                } else if (isShow) {
-                    collapsingToolbar.setTitle(" ");
-                    isShow = false;
-                }
+
+
             }
         });
-        recyclerView = (RecyclerView) v.findViewById(R.id.recycler_view);
-        albumList = new ArrayList<>();
-        adapter = new AlbumsAdapter(getActivity(), albumList);
-        RecyclerView.LayoutManager mLayoutManager = new GridLayoutManager(getActivity(), 2);
-        recyclerView.setLayoutManager(mLayoutManager);
-        recyclerView.addItemDecoration(new GridSpacingItemDecoration(2, dpToPx(10), true));
-        recyclerView.setItemAnimator(new DefaultItemAnimator());
-        recyclerView.setAdapter(adapter);
-        prepareAlbums();
 
-        try {
-            Glide.with(this).load(R.drawable.cover).into((ImageView) v.findViewById(R.id.backdrop));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+
         return v;
     }
 
-    public void initCollapsingToolbar() {
 
+    private void DownImages() throws JSONException, IOException {
+        if (AccessToken.getCurrentAccessToken()!=null)master= AccessToken.getCurrentAccessToken().getUserId();
+        if (master==null) master="JJJ";
+        Log.d("master","222222222"+ master);
+
+        down=new JSONArray();
+        new DownTask().execute();
     }
 
-
-
-
-    public class GridSpacingItemDecoration extends RecyclerView.ItemDecoration {
-
-        private int spanCount;
-        private int spacing;
-        private boolean includeEdge;
-
-        public GridSpacingItemDecoration(int spanCount, int spacing, boolean includeEdge) {
-            this.spanCount = spanCount;
-            this.spacing = spacing;
-            this.includeEdge = includeEdge;
+    private class DownTask extends AsyncTask<String, String, String> {
+        @Override
+        protected String doInBackground(String... params) {
+            HttpClient client = new DefaultHttpClient();
+            String getURL = "http://52.231.69.25:8080/api/photos/"+master;
+            Log.i("Yaa", "yaaaa");
+            HttpGet get = new HttpGet(getURL);
+            HttpResponse responseGet = null;
+            try {
+                responseGet = client.execute(get);
+                Log.i("Yaa", "Yeeee");
+            } catch (IOException e) {
+                e.printStackTrace();
+                Log.i("Yaa", "moooo");
+            }
+            HttpEntity resEntityGet = responseGet.getEntity();
+            Log.i("Yaa", "daadadaaa");
+            String json_string = null;
+            try {
+                json_string = EntityUtils.toString(resEntityGet);
+                Log.i("Yaa", "ABAABABA");
+            } catch (IOException e) {
+                e.printStackTrace();
+                Log.i("Yaa", "heeee");
+            }
+            try {
+                Log.i("master",new JSONArray(json_string).toString());
+                down=new JSONArray(json_string);
+                return new JSONArray(json_string).toString();
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            return getURL;
         }
 
         @Override
-        public void getItemOffsets(Rect outRect, View view, RecyclerView parent, RecyclerView.State state) {
-            int position = parent.getChildAdapterPosition(view); // item position
-            int column = position % spanCount; // item column
+        protected void onPostExecute(String s) {
+            dataList2 = new ArrayList<>();
 
-            if (includeEdge) {
-                outRect.left = spacing - column * spacing / spanCount; // spacing - column * ((1f / spanCount) * spacing)
-                outRect.right = (column + 1) * spacing / spanCount; // (column + 1) * ((1f / spanCount) * spacing)
-
-                if (position < spanCount) { // top edge
-                    outRect.top = spacing;
-                }
-                outRect.bottom = spacing; // item bottom
-            } else {
-                outRect.left = column * spacing / spanCount; // column * ((1f / spanCount) * spacing)
-                outRect.right = spacing - (column + 1) * spacing / spanCount; // spacing - (column + 1) * ((1f /    spanCount) * spacing)
-                if (position >= spanCount) {
-                    outRect.top = spacing; // item top
+            for(int i=0; i < down.length(); i++) {
+                JSONObject obj= null;
+                try {
+                    obj = down.getJSONObject(i);
+                    String tn = obj.getString("img");
+                    dataList2.add(tn);
+                } catch (JSONException e) {
+                    e.printStackTrace();
                 }
             }
+
+            mGridView.setAdapter(new AlbumsAdapter(getActivity(), dataList2));
+            onchange=1;
+
         }
+
     }
 
-    /**
-     * Converting dp to pixel
-     */
-    private int dpToPx(int dp) {
-        Resources r = getResources();
-        return Math.round(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp, r.getDisplayMetrics()));
-    }
 
-    // TODO: Rename method, update argument and hook method into UI event
-    public void onButtonPressed(Uri uri) {
-        if (mListener != null) {
-            mListener.onFragmentInteraction(uri);
+
+    private void checkPermission() {
+        int permissionCheck = ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.READ_EXTERNAL_STORAGE);
+        if(permissionCheck == PackageManager.PERMISSION_DENIED) {
+            ActivityCompat.requestPermissions(getActivity(),
+                    new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
+                    MY_PERMISSIONS_READ_EXTERNAL_STORAGE);
+            // requestPermissions => call onRequestPermissionsResult
+        } else {
+            gallery();
         }
     }
 
     @Override
-    public void onAttach(Context context) {
-        super.onAttach(context);
+    public void onRequestPermissionsResult(int requestCode,
+                                           String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case MY_PERMISSIONS_READ_EXTERNAL_STORAGE: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    // permission was granted, yay! Do the contacts-related task you need to do.
+                    gallery();
+                } else {
+                    // permission denied, boo! Disable the functionality that depends on this permission.
+                }
+                return;
+            }
+            // other 'case' lines to check for other permissions this app might request
+        }
     }
 
-    @Override
-    public void onDetach() {
-        super.onDetach();
-        mListener = null;
+    public String thumbnail(String id) {
+        Cursor tn_c = getActivity().getContentResolver().query(
+                MediaStore.Images.Thumbnails.EXTERNAL_CONTENT_URI,
+                new String[] {MediaStore.Images.Thumbnails.DATA},
+                MediaStore.Images.Thumbnails.IMAGE_ID + "=?",
+                new String[] {id},
+                null );
+        if(tn_c.moveToFirst()) {
+            return tn_c.getString(tn_c.getColumnIndex(MediaStore.Images.Thumbnails.DATA));
+        } else {
+            MediaStore.Images.Thumbnails.getThumbnail(
+                    getActivity().getContentResolver(),
+                    Long.parseLong(id),
+                    MediaStore.Images.Thumbnails.MINI_KIND,
+                    null );
+            tn_c.close();
+            return thumbnail(id);
+        }
     }
 
-    /**
-     * This interface must be implemented by activities that contain this
-     * fragment to allow an interaction in this fragment to be communicated
-     * to the activity and potentially other fragments contained in that
-     * activity.
-     * <p>
-     * See the Android Training lesson <a href=
-     * "http://developer.android.com/training/basics/fragments/communicating.html"
-     * >Communicating with Other Fragments</a> for more information.
-     */
-    public interface OnFragmentInteractionListener {
-        // TODO: Update argument type and name
-        void onFragmentInteraction(Uri uri);
+    public void gallery(){
+        dataList1 = new ArrayList<String>();
+        dataList2 = new ArrayList<String>();
+        dataListname = new ArrayList<String>();
+        onchange=0;
+        Cursor c = getActivity().getContentResolver().query(
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                null,
+                null,
+                null,
+                null );
+
+        if(c.moveToFirst()) do {
+            String data = c.getString(c.getColumnIndex(MediaStore.Images.Media.DATA));
+            dataList1.add(data);
+
+            String id = c.getString(c.getColumnIndex(MediaStore.Images.Media._ID));
+            dataListname.add(id);
+            String tn = thumbnail(id);
+            dataList2.add(tn);
+        } while (c.moveToNext());
+
+        c.close();
+        mGridView.setAdapter(new AlbumsAdapter(getActivity(), dataList2));
+        mGridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
+
+                if (AccessToken.getCurrentAccessToken()!=null)master= AccessToken.getCurrentAccessToken().getUserId();
+                if (master==null) master="JJJ";
+
+                new UploadTask().execute("http://52.231.69.25:8080/api/photos", dataListname.get(position),dataList2.get(position));
+                Log.i("master",dataListname.get(position)+dataList2.get(position));
+
+                //Intent i = new Intent(getActivity().getApplicationContext(), FullImageActivity.class);
+                //i.putExtra("id", position);
+                //startActivity(i);
+            }
+        });
     }
+
+    private  class UploadTask extends AsyncTask<String, String, String> {
+        @Override
+        protected String doInBackground(String... params) {
+            try{
+
+                JSONObject jsonObject = new JSONObject();
+                jsonObject.accumulate("name",params[1]);
+                jsonObject.accumulate("image",params[2]);
+                jsonObject.accumulate("master",master);
+                HttpURLConnection con = null;
+                BufferedReader reader = null;
+                try {
+                    URL url = new URL(params[0]);
+                    con = (HttpURLConnection) url.openConnection();
+                    con.setRequestMethod("POST");
+                    con.setRequestProperty("Cache-Control", "no-cache");
+                    con.setRequestProperty("Content-Type", "application/json");
+                    con.setRequestProperty("Accept", "text/html");
+                    con.setDoOutput(true);
+                    con.setDoInput(true);
+                    con.connect();
+                    OutputStream outStream = con.getOutputStream();
+
+                    //버퍼를 생성하고 넣음
+                    BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(outStream));
+                    writer.write(jsonObject.toString());
+                    writer.flush();
+                    writer.close();
+                    InputStream stream = con.getInputStream();
+                    reader = new BufferedReader(new InputStreamReader(stream));
+                    StringBuffer buffer = new StringBuffer();
+                    String line = "";
+                    while ((line = reader.readLine()) != null) {
+                        buffer.append(line);
+                    }
+                    return buffer.toString();
+                }catch (MalformedURLException e) {
+                    e.printStackTrace();
+                }catch (IOException e) {
+                    e.printStackTrace();
+                }finally{
+                    if(con!=null){
+                        con.disconnect();
+                    }
+                    try{
+                        if(reader!=null){
+                            reader.close();
+                        }
+                    }catch (IOException e){
+                        e.printStackTrace();
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+    }
+
+
+
+
+
 }

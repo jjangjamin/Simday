@@ -52,6 +52,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+
 import static com.example.q.simday.R.drawable.contacticon;
 
 /**
@@ -197,14 +201,14 @@ String master;
         if (AccessToken.getCurrentAccessToken()!=null)master= AccessToken.getCurrentAccessToken().getUserId();
         if (master==null) master="JJJ";
         Log.d("master","222222222"+ master);
-        new UploadTask().execute("http://52.231.64.79:8080/api/deletecon",name,phonenumber);
+        new UploadTask().execute("http://52.231.69.25:8080/api/deletecon",name,phonenumber);
         Cursor cursor2 = getActivity().getContentResolver().query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI, null, null, null, null);
         if (cursor2.getCount() > 0) {
             while (cursor2.moveToNext()) {
                 name = cursor2.getString(cursor2.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME));
                 phonenumber = cursor2.getString(cursor2.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
                 profilepic = cursor2.getInt(cursor2.getColumnIndex(ContactsContract.CommonDataKinds.Phone.PHOTO_URI));
-                new UploadTask().execute("http://52.231.64.79:8080/api/contacts",name,phonenumber);
+                new UploadTask().execute("http://52.231.69.25:8080/api/contacts",name,phonenumber);
                 Log.i("doing",name);
             }
             cursor.close();
@@ -215,31 +219,66 @@ String master;
         if (AccessToken.getCurrentAccessToken()!=null)master= AccessToken.getCurrentAccessToken().getUserId();
         if (master==null) master="JJJ";
         Log.d("master","222222222"+ master);
-        JSONArray test = new JSONArray();
-        JSONObject data1=new JSONObject();
-        data1.put("name","사람1");
-        data1.put("num","번호1");
-        JSONObject data2=new JSONObject();
-        data2.put("name","사람2");
-        data2.put("num","번호2");
-        JSONObject data3=new JSONObject();
-        data3.put("name","사람3");
-        data3.put("num","번호3");
-        test.put(data1);
-        test.put(data2);
-        test.put(data3);
-
         resq = new JSONArray();
+
         new SynchronizeTask().execute();
-        for(int i=0; i < resq.length(); i++) {
-            JSONObject obj=resq.getJSONObject(i);
-            name = obj.getString("name");
-            phonenumber = obj.getString("num");
-            newuserList.add(new User(contacticon, name, phonenumber, "haha"));
+    }
+
+
+    private class SynchronizeTask extends AsyncTask<String, String, String> {
+        @Override
+        protected String doInBackground(String... params) {
+            HttpClient client = new DefaultHttpClient();
+            String getURL = "http://52.231.69.25:8080/api/contacts/"+master;
+            HttpGet get = new HttpGet(getURL);
+            HttpResponse responseGet = null;
+            try {
+                responseGet = client.execute(get);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            HttpEntity resEntityGet = responseGet.getEntity();
+
+            String json_string = null;
+            try {
+                json_string = EntityUtils.toString(resEntityGet);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            try {
+                Log.i("master",new JSONArray(json_string).toString());
+                resq=new JSONArray(json_string);
+
+
+                return new JSONArray(json_string).toString();
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+            return getURL;
         }
 
-        newadapter = new RecyclerAdapter(newuserList, getActivity());
-        recyclerView.setAdapter(newadapter);
+
+        @Override
+        protected void onPostExecute(String s) {
+
+            for(int i=0; i < resq.length(); i++) {
+                JSONObject obj= null;
+                try {
+                    obj = resq.getJSONObject(i);
+                    name = obj.getString("name");
+                    phonenumber = obj.getString("num");
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                newuserList.add(new User(contacticon, name, phonenumber, "haha"));
+            }
+
+            newadapter = new RecyclerAdapter(newuserList, getActivity());
+            recyclerView.setAdapter(newadapter);
+
+        }
+
     }
 
 
@@ -392,36 +431,6 @@ String master;
     }
 
 
-
-
-    private class SynchronizeTask extends AsyncTask<String, String, String> {
-        @Override
-        protected String doInBackground(String... params) {
-            HttpClient client = new DefaultHttpClient();
-            String getURL = "http://52.231.64.79:8080/api/contacts?master="+master;
-            HttpGet get = new HttpGet(getURL);
-            HttpResponse responseGet = null;
-            try {
-                responseGet = client.execute(get);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            HttpEntity resEntityGet = responseGet.getEntity();
-            String json_string = null;
-            try {
-                json_string = EntityUtils.toString(resEntityGet);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            try {
-                resq = new JSONArray(json_string);
-                Log.i("master",resq.toString());
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-            return getURL;
-        }
-    }
 
         private  class UploadTask extends AsyncTask<String, String, String> {
             @Override
