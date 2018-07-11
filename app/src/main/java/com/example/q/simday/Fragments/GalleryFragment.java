@@ -147,28 +147,21 @@ public class GalleryFragment extends Fragment {
         protected String doInBackground(String... params) {
             HttpClient client = new DefaultHttpClient();
             String getURL = "http://52.231.69.25:8080/api/photos/"+master;
-            Log.i("Yaa", "yaaaa");
             HttpGet get = new HttpGet(getURL);
             HttpResponse responseGet = null;
             try {
                 responseGet = client.execute(get);
-                Log.i("Yaa", "Yeeee");
             } catch (IOException e) {
                 e.printStackTrace();
-                Log.i("Yaa", "moooo");
             }
             HttpEntity resEntityGet = responseGet.getEntity();
-            Log.i("Yaa", "daadadaaa");
             String json_string = null;
             try {
                 json_string = EntityUtils.toString(resEntityGet);
-                Log.i("Yaa", "ABAABABA");
             } catch (IOException e) {
                 e.printStackTrace();
-                Log.i("Yaa", "heeee");
             }
             try {
-                Log.i("master",new JSONArray(json_string).toString());
                 down=new JSONArray(json_string);
                 return new JSONArray(json_string).toString();
             } catch (JSONException e) {
@@ -195,20 +188,22 @@ public class GalleryFragment extends Fragment {
             mGridView.setAdapter(new AlbumsAdapter(getActivity(), dataList2));
             onchange=1;
 
-
-
             mGridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                 @Override
-                public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
-                    if (AccessToken.getCurrentAccessToken()!=null)master= AccessToken.getCurrentAccessToken().getUserId();
-                    if (master==null) master="JJJ";
+                public void onItemClick(AdapterView<?> adapterView, View view, final int position, long id) {
 
-                    new deleteDownTask().execute("http://52.231.69.25:8080/api/deleteimage", dataListname.get(position) ,dataList2.get(position));
-                    Log.i("master",dataListname.get(position)+dataList2.get(position));
+                    new AlertDialog.Builder(getActivity()).setTitle("삭제").setMessage("선택하신 사진을 삭제 하시겠습니까?").setIcon(android.R.drawable.ic_input_add)
+                            .setPositiveButton("예", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialogInterface, int i) {
+                                    if (AccessToken.getCurrentAccessToken()!=null)master= AccessToken.getCurrentAccessToken().getUserId();
+                                    if (master==null) master="JJJ";
+                                    new deleteDownTask().execute("http://52.231.69.25:8080/api/deleteimage", dataListname.get(position) ,dataList2.get(position));
+                                    Log.i("master",dataListname.get(position)+dataList2.get(position));
 
-                    //Intent i = new Intent(getActivity().getApplicationContext(), FullImageActivity.class);
-                    //i.putExtra("id", position);
-                    //startActivity(i);
+                                }
+                            })
+                            .setNegativeButton("아니오", null).show();
                 }
             });
 
@@ -223,10 +218,12 @@ public class GalleryFragment extends Fragment {
             try{
                 JSONObject jsonObject = new JSONObject();
                 jsonObject.accumulate("name",params[1]);
-                jsonObject.accumulate("image",params[2]);
+                jsonObject.accumulate("img",params[2]);
                 jsonObject.accumulate("master",master);
                 HttpURLConnection con;
                 URL url = new URL(params[0]);
+                Log.i("master",params[0]);
+                Log.i("master",jsonObject.toString());
                 con = (HttpURLConnection) url.openConnection();
                 con.setRequestMethod("POST");
                 con.setRequestProperty("Cache-Control", "no-cache");
@@ -235,6 +232,21 @@ public class GalleryFragment extends Fragment {
                 con.setDoOutput(true);
                 con.setDoInput(true);
                 con.connect();
+
+
+                OutputStream outStream = con.getOutputStream();
+                //버퍼를 생성하고 넣음
+                BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(outStream));
+                writer.write(jsonObject.toString());
+                writer.flush();
+                writer.close();
+                InputStream stream = con.getInputStream();
+                BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
+                StringBuffer buffer = new StringBuffer();
+                String line = "";
+                while ((line = reader.readLine()) != null) {
+                    buffer.append(line);
+                }
 
             } catch (Exception e) {
                 e.printStackTrace();
