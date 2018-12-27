@@ -21,7 +21,7 @@ import com.example.q.simday.R;
 public class MainActivity extends AppCompatActivity implements ContactFragment.OnFragmentInteractionListener {
 
     private PageAdapter mAdapter2;
-    String master;
+    String master="hhh";
     Intent master2;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
